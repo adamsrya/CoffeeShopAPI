@@ -1,0 +1,9 @@
+Spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: kintamani
+    url: jdbc:postgresql://localhost:5432/coffeeshopapidb
+  jpa:
+    hibernate:
+      ddl-auto: update
