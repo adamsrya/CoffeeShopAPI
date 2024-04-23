@@ -30,8 +30,13 @@ dependencies {
 	implementation 'org.springframework.security:spring-security-core:6.1.0'
 	//
 	testImplementation 'org.hamcrest:hamcrest:2.1'
-
-
+	//jjwt
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+	//SecurityWeb
+	implementation 'org.springframework.security:spring-security-web:6.2.0'
+	implementation 'org.springframework.security:spring-security-config:6.2.0'
 
 
 

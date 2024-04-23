@@ -1,6 +1,7 @@
 package coffeeshopproject.CoffeeShopAPI.entity;
 
 import coffeeshopproject.CoffeeShopAPI.model.address.LabelCategoriAddressModel;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -56,6 +57,6 @@ public class Address {
     @DateTimeFormat(pattern = "dd-MM-yyyy HH:mm:ss")
     private Date updated;
     @ManyToOne
-    @JoinColumn(name = "email", referencedColumnName = "email")
+    @JoinColumn(name = "email",referencedColumnName = "email")
     private User user;
 }

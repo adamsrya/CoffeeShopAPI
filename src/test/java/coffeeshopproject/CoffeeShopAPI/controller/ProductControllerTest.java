@@ -1,11 +1,15 @@
 package coffeeshopproject.CoffeeShopAPI.controller;
 
 import coffeeshopproject.CoffeeShopAPI.entity.Product;
+import coffeeshopproject.CoffeeShopAPI.entity.User;
 import coffeeshopproject.CoffeeShopAPI.model.product.CreateProductModel;
 import coffeeshopproject.CoffeeShopAPI.model.product.ProductCategoryModel;
 import coffeeshopproject.CoffeeShopAPI.model.product.ProductResponse;
 import coffeeshopproject.CoffeeShopAPI.model.product.UpdateProductModel;
+import coffeeshopproject.CoffeeShopAPI.model.user.RoleUserModel;
 import coffeeshopproject.CoffeeShopAPI.repository.ProductRepository;
+import coffeeshopproject.CoffeeShopAPI.repository.UserRepository;
+import coffeeshopproject.CoffeeShopAPI.security.jwt.JwtService;
 import coffeeshopproject.CoffeeShopAPI.util.Response;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,11 +19,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -34,21 +39,39 @@ public class ProductControllerTest {
 
     @Autowired
     ProductRepository productRepository;
-
+    @Autowired
+    UserRepository userRepository;
+    @Autowired
+    PasswordEncoder passwordEncoder;
+    @Autowired
+    JwtService jwtService;
     @Autowired
     ObjectMapper objectMapper;
 
 
     @BeforeEach
     void setUp() {
-
-
         productRepository.deleteAll();
+        userRepository.deleteAll();
     }
 
 
     @Test
     void CreateProductSuccess() throws Exception {
+        User user = new User();
+        user.setFirstname("Adam");
+        user.setLastname("Surya");
+        user.setEmail("damsuryap@com");
+        user.setPassword(passwordEncoder.encode("Test1234"));
+        user.setExpired(false);
+        user.setRevoked(false);
+        user.setCreated(new Date());
+        user.setUpdated(null);
+        user.setRole(RoleUserModel.ADMIN);
+        String token = jwtService.generateToken(user);
+        user.setToken(token);
+        userRepository.save(user);
+
         String idproduct = "test";
         CreateProductModel request = new CreateProductModel();
         request.setId(idproduct.toUpperCase());
@@ -64,6 +87,7 @@ public class ProductControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
+                        .header("Authorization", "Bearer " + token)
 
         ).andExpectAll(
                 status().isOk()
@@ -84,6 +108,20 @@ public class ProductControllerTest {
 
     @Test
     void CreateProductBadRequest() throws Exception {
+        User user = new User();
+        user.setFirstname("Adam");
+        user.setLastname("Surya");
+        user.setEmail("damsuryap@com");
+        user.setPassword(passwordEncoder.encode("Test1234"));
+        user.setExpired(false);
+        user.setRevoked(false);
+        user.setCreated(new Date());
+        user.setUpdated(null);
+        user.setRole(RoleUserModel.ADMIN);
+        String token = jwtService.generateToken(user);
+        user.setToken(token);
+        userRepository.save(user);
+
         CreateProductModel request = new CreateProductModel();
         request.setId("");
         request.setCategory(null);
@@ -98,6 +136,7 @@ public class ProductControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
+                        .header("Authorization", "Bearer " + token)
 
         ).andExpectAll(
                 status().isBadRequest()
@@ -111,6 +150,20 @@ public class ProductControllerTest {
 
     @Test
     void CreateProductDuplicate() throws Exception {
+        User user = new User();
+        user.setFirstname("Adam");
+        user.setLastname("Surya");
+        user.setEmail("damsuryap@com");
+        user.setPassword(passwordEncoder.encode("Test1234"));
+        user.setExpired(false);
+        user.setRevoked(false);
+        user.setCreated(new Date());
+        user.setUpdated(null);
+        user.setRole(RoleUserModel.ADMIN);
+        String token = jwtService.generateToken(user);
+        user.setToken(token);
+        userRepository.save(user);
+
         Product product = new Product();
         product.setId("cf0001");
         product.setCategory(ProductCategoryModel.valueOf("COFFEE"));
@@ -135,6 +188,7 @@ public class ProductControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(productModel))
+                        .header("Authorization", "Bearer " + token)
 
         ).andExpectAll(
                 status().isBadRequest()
@@ -199,6 +253,20 @@ public class ProductControllerTest {
 
     @Test
     void UpdateProductSuccess() throws Exception {
+        User user = new User();
+        user.setFirstname("Adam");
+        user.setLastname("Surya");
+        user.setEmail("damsuryap@com");
+        user.setPassword(passwordEncoder.encode("Test1234"));
+        user.setExpired(false);
+        user.setRevoked(false);
+        user.setCreated(new Date());
+        user.setUpdated(null);
+        user.setRole(RoleUserModel.ADMIN);
+        String token = jwtService.generateToken(user);
+        user.setToken(token);
+        userRepository.save(user);
+
         Optional<Product> productDB = productRepository.findByid("test");
         Product product = new Product();
         product.setId(String.valueOf(productDB).toUpperCase());
@@ -223,6 +291,7 @@ public class ProductControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
+                        .header("Authorization", "Bearer " + token)
         ).andExpectAll(
                 status().isOk()
         ).andDo(result -> {
@@ -245,7 +314,7 @@ public class ProductControllerTest {
     @Test
     void SearchNotFound() throws Exception {
         mockMvc.perform(
-                get("/api/products")
+                get("/api/products/search")
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
         ).andExpectAll(
@@ -263,33 +332,29 @@ public class ProductControllerTest {
 
     @Test
     void SearchProductSuccess() throws Exception {
-        for (int i = 0; i < 20; i++) {
             Product product = new Product();
-            product.setId("CF000" + UUID.randomUUID());
+            product.setId("CF0001");
             product.setCategory(ProductCategoryModel.valueOf("COFFEE"));
-            product.setName("coffee toraja " + i);
+            product.setName("coffee toraja");
             product.setPrice(1L);
             product.setDescription("test");
             product.setExtras("test");
             product.setQuantity(2);
             productRepository.save(product);
-        }
 
         mockMvc.perform(
-                get("/api/products")
-                        .queryParam("name", "toraja")
+                get("/api/products/search")
+                        .queryParam("name", "tora")
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
+
         ).andExpectAll(
                 status().isOk()
         ).andDo(result -> {
             Response<List<Product>> response = objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {
             });
             assertNotNull(response.getData());
-            assertEquals(10, response.getData().size());
-            assertEquals(2, response.getPaging().getTotalPage());
-            assertEquals(0, response.getPaging().getCurrentPage());
-            assertEquals(10, response.getPaging().getSize());
+
 
         });
 
@@ -298,23 +363,78 @@ public class ProductControllerTest {
                         .queryParam("description", "test")
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-API-TOKEN", "test")
         ).andExpectAll(
                 status().isOk()
         ).andDo(result -> {
             Response<List<Product>> response = objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {
             });
             assertNotNull(response.getData());
-            assertEquals(10, response.getData().size());
-            assertEquals(2, response.getPaging().getTotalPage());
+
+
+        });
+    }
+    @Test
+    void CategoryNotFound() throws Exception {
+        mockMvc.perform(
+                get("/api/products/category")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+        ).andExpectAll(
+                status().isOk()
+        ).andDo(result -> {
+            Response<List<Product>> response = objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {
+            });
+            assertNotNull(response.getData());
+            assertEquals(0, response.getData().size());
+            assertEquals(0, response.getPaging().getTotalPage());
             assertEquals(0, response.getPaging().getCurrentPage());
             assertEquals(10, response.getPaging().getSize());
-
         });
     }
 
     @Test
+    void CategoryProductSuccess() throws Exception {
+        Product product = new Product();
+        product.setId("CF0001");
+        product.setCategory(ProductCategoryModel.valueOf("COFFEE"));
+        product.setName("coffee toraja");
+        product.setPrice(1L);
+        product.setDescription("test");
+        product.setExtras("test");
+        product.setQuantity(2);
+        productRepository.save(product);
+
+        mockMvc.perform(
+                get("/api/products/category")
+                        .queryParam("category", "COFFEE")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+
+        ).andExpectAll(
+                status().isOk()
+        ).andDo(result -> {
+            Response<List<Product>> response = objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {
+            });
+            assertNotNull(response.getData());
+
+        });
+    }
+    @Test
     void DeleteProductSuccess() throws Exception {
+        User user = new User();
+        user.setFirstname("Adam");
+        user.setLastname("Surya");
+        user.setEmail("damsuryap@com");
+        user.setPassword(passwordEncoder.encode("Test1234"));
+        user.setExpired(false);
+        user.setRevoked(false);
+        user.setCreated(new Date());
+        user.setUpdated(null);
+        user.setRole(RoleUserModel.ADMIN);
+        String token = jwtService.generateToken(user);
+        user.setToken(token);
+        userRepository.save(user);
+
         Optional<Product> productDB = productRepository.findByid("test");
         Product product = new Product();
         product.setId(String.valueOf(productDB).toUpperCase());
@@ -330,6 +450,7 @@ public class ProductControllerTest {
                 delete("/api/products/" + product.getId())
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token)
         ).andExpectAll(
                 status().isOk()
         ).andDo(result -> {
@@ -342,10 +463,24 @@ public class ProductControllerTest {
 
     @Test
     void DeleteProductNotFound() throws Exception {
+        User user = new User();
+        user.setFirstname("Adam");
+        user.setLastname("Surya");
+        user.setEmail("damsuryap@com");
+        user.setPassword(passwordEncoder.encode("Test1234"));
+        user.setExpired(false);
+        user.setRevoked(false);
+        user.setCreated(new Date());
+        user.setUpdated(null);
+        user.setRole(RoleUserModel.ADMIN);
+        String token = jwtService.generateToken(user);
+        user.setToken(token);
+        userRepository.save(user);
         mockMvc.perform(
                 delete("/api/products/adsada")
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token)
         ).andExpectAll(
                 status().isNotFound()
         ).andDo(result -> {

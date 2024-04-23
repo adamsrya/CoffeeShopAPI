@@ -2,15 +2,13 @@ package coffeeshopproject.CoffeeShopAPI.controller;
 
 import coffeeshopproject.CoffeeShopAPI.entity.Product;
 import coffeeshopproject.CoffeeShopAPI.model.PagingResponse;
-import coffeeshopproject.CoffeeShopAPI.model.product.CreateProductModel;
-import coffeeshopproject.CoffeeShopAPI.model.product.ProductResponse;
-import coffeeshopproject.CoffeeShopAPI.model.product.SearchProductModel;
-import coffeeshopproject.CoffeeShopAPI.model.product.UpdateProductModel;
+import coffeeshopproject.CoffeeShopAPI.model.product.*;
 import coffeeshopproject.CoffeeShopAPI.services.ProductService;
 import coffeeshopproject.CoffeeShopAPI.util.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,6 +25,7 @@ public class ProductController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Response<ProductResponse> createProduct(@RequestBody CreateProductModel productModel) {
         ProductResponse product = productService.createProduct(productModel);
        return Response.<ProductResponse>builder()
@@ -44,6 +43,7 @@ public class ProductController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Response<ProductResponse> updateProduct(Product product ,@RequestBody UpdateProductModel
               productModel, @PathVariable String id) {
         productModel.setId(id);
@@ -73,7 +73,7 @@ public class ProductController {
 
 
 
-   /* @GetMapping(
+    @GetMapping(
             path = "/api/products",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
@@ -82,10 +82,10 @@ public class ProductController {
         return Response.<List<Product>>builder()
                 .data(product)
                 .build();
-    }*/
+    }
 
     @GetMapping(
-            path = "/api/products",
+            path = "/api/products/search",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public Response<List<ProductResponse>> search(Product product,
@@ -109,11 +109,35 @@ public class ProductController {
                         .build())
                 .build();
     }
+    @GetMapping(
+            path = "/api/products/category",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public Response<List<ProductResponse>> categoryProduct(Product product,
+                                                  @RequestParam(value = "category",required = false)ProductCategoryModel category,
+                                                  @RequestParam(value = "page",required = false,defaultValue = "0")Integer page,
+                                                  @RequestParam(value = "size",required = false,defaultValue = "10")Integer size){
+        CategoryRequestModel request = CategoryRequestModel.builder()
+                .page(page)
+                .size(size)
+                .productCategoryModel(category)
+                .build();
+        Page<ProductResponse> productResponses =productService.category(product,request);
+        return Response.<List<ProductResponse>>builder()
+                .data(productResponses.getContent())
+                .paging(PagingResponse.builder()
+                        .currentPage(productResponses.getNumber())
+                        .totalPage(productResponses.getTotalPages())
+                        .size(productResponses.getSize())
+                        .build())
+                .build();
+    }
 
     @DeleteMapping(
             path = "/api/products/{id}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Response<String> deleteById(@PathVariable String id){
         productService.deleteProduct(id);
         return Response.<String>builder()

@@ -7,12 +7,14 @@ import coffeeshopproject.CoffeeShopAPI.model.user.UserResponse;
 
 public interface UserService {
 
-    void create(CreateUserModel user);
 
-    UserResponse get(User user);
+    UserResponse get();
 
-    void updateAuthUser(UpdateUserModel req, User user);
-    UserResponse updateProfilUser(UpdateUserModel req,User user);
+    void updateAuthUser(UpdateUserModel req, String userId);
+
+    UserResponse updateProfilUser(UpdateUserModel req, String userId);
+
+    void deleteUser(String id,String admin);
 
 
 }

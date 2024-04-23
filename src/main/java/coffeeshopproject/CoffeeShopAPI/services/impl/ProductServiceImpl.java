@@ -1,22 +1,21 @@
 package coffeeshopproject.CoffeeShopAPI.services.impl;
 
 import coffeeshopproject.CoffeeShopAPI.entity.Product;
-import coffeeshopproject.CoffeeShopAPI.model.product.CreateProductModel;
-import coffeeshopproject.CoffeeShopAPI.model.product.ProductResponse;
-import coffeeshopproject.CoffeeShopAPI.model.product.SearchProductModel;
-import coffeeshopproject.CoffeeShopAPI.model.product.UpdateProductModel;
+import coffeeshopproject.CoffeeShopAPI.model.product.*;
 import coffeeshopproject.CoffeeShopAPI.repository.ProductRepository;
 import coffeeshopproject.CoffeeShopAPI.services.ProductService;
 import coffeeshopproject.CoffeeShopAPI.util.ValidationUtil;
-import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.*;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.*;
+import java.util.Date;
+import java.util.List;
 
 
 @Service
@@ -82,30 +81,30 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Page<ProductResponse> search(Product product, SearchProductModel request) {
-
-        Specification<Product> specification = (root, query, builder) -> {
-        List<Predicate> predicates = new ArrayList<>();
-        if (Objects.nonNull(request.getName())){
-            predicates.add(builder.like(root.get("name"),"%"+request.getName()+"%"));
-        }
-        if (Objects.nonNull(request.getDescription())){
-                predicates.add(builder.like(root.get("description"),"%"+request.getDescription()+"%"));
-        }
-            return query.where(predicates.toArray(new Predicate[]{})).getRestriction();
-        };
-
         Pageable pageable = PageRequest.of(request.getPage(),request.getSize());
-        Page<Product> products = productRepository.findAll(specification,pageable);
+        Page<Product> products = productRepository.findByNameIgnoreCaseContainingAndDescriptionIgnoreCaseContaining
+                        (request.getName(),request.getDescription(),pageable);
         List<ProductResponse> productResponses = products.getContent().stream()
                 .map(this::convertproducttoresponse)
                 .toList();
         return new PageImpl<>(productResponses,pageable,products.getTotalElements());
     }
 
-   /* @Override
+    @Override
+    public Page<ProductResponse> category(Product product, CategoryRequestModel request) {
+        Pageable pageable = PageRequest.of(request.getPage(),request.getSize());
+        Page<Product> products = productRepository.findByCategory
+                (request.getProductCategoryModel(),pageable);
+        List<ProductResponse> productResponses = products.getContent().stream()
+                .map(this::convertproducttoresponse)
+                .toList();
+        return new PageImpl<>(productResponses,pageable,products.getTotalElements());
+    }
+
+    @Override
     public List<Product> findall() {
         return productRepository.findAll();
-    }*/
+    }
 
 
     private ProductResponse convertproducttoresponse(Product product){

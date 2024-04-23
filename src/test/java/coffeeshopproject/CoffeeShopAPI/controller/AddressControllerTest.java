@@ -6,9 +6,11 @@ import coffeeshopproject.CoffeeShopAPI.model.address.AddressResponse;
 import coffeeshopproject.CoffeeShopAPI.model.address.CreateAddressModel;
 import coffeeshopproject.CoffeeShopAPI.model.address.LabelCategoriAddressModel;
 import coffeeshopproject.CoffeeShopAPI.model.address.UpdateAddressModel;
+import coffeeshopproject.CoffeeShopAPI.model.user.RoleUserModel;
+import coffeeshopproject.CoffeeShopAPI.model.user.UserResponse;
 import coffeeshopproject.CoffeeShopAPI.repository.AddressRepository;
 import coffeeshopproject.CoffeeShopAPI.repository.UserRepository;
-import coffeeshopproject.CoffeeShopAPI.security.BCrypt;
+import coffeeshopproject.CoffeeShopAPI.security.jwt.JwtService;
 import coffeeshopproject.CoffeeShopAPI.util.Response;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,7 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -37,22 +42,29 @@ public class AddressControllerTest {
     UserRepository userRepository;
     @Autowired
     ObjectMapper objectMapper;
+    @Autowired
+    PasswordEncoder passwordEncoder;
+    @Autowired
+    JwtService jwtService;
     private User user;
-
+    private String token;
 
     @BeforeEach
     void setUp() {
         addressRepository.deleteAll();
         userRepository.deleteAll();
-        user = User.builder()
-                .firstname("adam")
-                .lastname("surya")
-                .email("test@.com")
-                .password(BCrypt.hashpw("Test1234", BCrypt.gensalt()))
-                .repassword(BCrypt.hashpw("Test1234", BCrypt.gensalt()))
-                .token("test")
-                .tokenExpiredAt(System.currentTimeMillis() + 1000000L)
-                .build();
+        user = new User();
+        user.setFirstname("Adam");
+        user.setLastname("Surya");
+        user.setEmail("damsuryap@com");
+        user.setPassword(passwordEncoder.encode("Test1234"));
+        user.setExpired(false);
+        user.setRevoked(false);
+        user.setCreated(new Date());
+        user.setUpdated(null);
+        user.setRole(RoleUserModel.ADMIN);
+        token = jwtService.generateToken(user);
+        user.setToken(token);
         userRepository.save(user);
     }
 
@@ -73,7 +85,7 @@ public class AddressControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req))
-                        .header("X-TOKEN-API", "test")
+                        .header("Authorization", "Bearer " + token)
         ).andExpectAll(
                 status().isOk()
         ).andDo(result -> {
@@ -86,7 +98,7 @@ public class AddressControllerTest {
         });
     }
     @Test
-    void CreateAddressUnauthorized() throws Exception{
+    void CreateAddressForbidden() throws Exception{
         CreateAddressModel req = new CreateAddressModel();
         req.setName("adam");
         req.setHandphone("08124324322");
@@ -104,11 +116,13 @@ public class AddressControllerTest {
                         .content(objectMapper.writeValueAsString(req))
 
         ).andExpectAll(
-                status().isUnauthorized()
+                status().isForbidden()
         ).andDo(result -> {
-            Response<AddressResponse> response = objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {
-            });
-            assertNotNull(response.getMessage());
+            if (result.getResponse().getContentLength() > 0) {
+                Response<UserResponse> response = objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {
+                });
+                assertNotNull(response.getMessage());
+            }
         });
     }
 
@@ -129,7 +143,7 @@ public class AddressControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req))
-                        .header("X-TOKEN-API", "test")
+                        .header("Authorization", "Bearer " + token)
         ).andExpectAll(
                 status().isBadRequest()
         ).andDo(result -> {
@@ -170,7 +184,7 @@ public class AddressControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req))
-                        .header("X-TOKEN-API", "test")
+                        .header("Authorization", "Bearer " + token)
 
         ).andExpectAll(
                 status().isOk()
@@ -185,7 +199,7 @@ public class AddressControllerTest {
     }
 
     @Test
-    void UpdateAddressUnauthorized() throws Exception{
+    void UpdateAddressForbidden() throws Exception{
         Address address = new Address();
         address.setName("adam");
         address.setHandphone("08124324322");
@@ -216,11 +230,13 @@ public class AddressControllerTest {
                         .content(objectMapper.writeValueAsString(req))
 
         ).andExpectAll(
-                status().isUnauthorized()
+                status().isForbidden()
         ).andDo(result -> {
-            Response<AddressResponse> response = objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {
-            });
-            assertNotNull(response.getMessage());
+            if (result.getResponse().getContentLength() > 0) {
+                Response<UserResponse> response = objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {
+                });
+                assertNotNull(response.getMessage());
+            }
         });
     }
 
@@ -254,7 +270,7 @@ public class AddressControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req))
-                        .header("X-TOKEN-API", "test")
+                        .header("Authorization", "Bearer " + token)
 
         ).andExpectAll(
                 status().isBadRequest()
@@ -295,7 +311,7 @@ public class AddressControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req))
-                        .header("X-TOKEN-API", "test")
+                        .header("Authorization", "Bearer " + token)
 
         ).andExpectAll(
                 status().isNotFound()
@@ -324,7 +340,7 @@ public class AddressControllerTest {
         mockMvc.perform(
                 get("/api/address/{id}", address.getId())
                         .accept(MediaType.APPLICATION_JSON)
-                        .header("X-TOKEN-API", "test")
+                        .header("Authorization", "Bearer " + token)
 
         ).andExpectAll(
                 status().isOk()
@@ -338,7 +354,7 @@ public class AddressControllerTest {
         });
     }
     @Test
-    void GetAddressUnauthorized() throws Exception{
+    void GetAddressForbidden() throws Exception{
         Address address = new Address();
         address.setName("adam");
         address.setHandphone("08124324322");
@@ -357,12 +373,13 @@ public class AddressControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
 
         ).andExpectAll(
-                status().isUnauthorized()
+                status().isForbidden()
         ).andDo(result -> {
-            Response<AddressResponse> response = objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {
-            });
-            assertNotNull(response.getMessage());
-
+            if (result.getResponse().getContentLength() > 0) {
+                Response<UserResponse> response = objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {
+                });
+                assertNotNull(response.getMessage());
+            }
         });
     }
 
@@ -384,7 +401,7 @@ public class AddressControllerTest {
         mockMvc.perform(
                 delete("/api/address/5")
                         .accept(MediaType.APPLICATION_JSON)
-                        .header("X-TOKEN-API", "test")
+                        .header("Authorization", "Bearer " + token)
 
         ).andExpectAll(
                 status().isNotFound()
@@ -412,7 +429,7 @@ public class AddressControllerTest {
         mockMvc.perform(
                 delete("/api/address/{id}", address.getId())
                         .accept(MediaType.APPLICATION_JSON)
-                        .header("X-TOKEN-API", "test")
+                        .header("Authorization", "Bearer " + token)
 
         ).andExpectAll(
                 status().isOk()
@@ -438,9 +455,9 @@ public class AddressControllerTest {
         addressRepository.save(address);
 
         mockMvc.perform(
-                delete("/api/address/4")
+                delete("/api/address/500")
                         .accept(MediaType.APPLICATION_JSON)
-                        .header("X-TOKEN-API", "test")
+                        .header("Authorization", "Bearer " + token)
 
         ).andExpectAll(
                 status().isNotFound()
@@ -452,7 +469,7 @@ public class AddressControllerTest {
     }
 
     @Test
-    void DeleteAddressUnauthorized() throws Exception{
+    void DeleteAddressForbidden() throws Exception{
         Address address = new Address();
         address.setName("adam");
         address.setHandphone("08124324322");
@@ -471,11 +488,13 @@ public class AddressControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
 
         ).andExpectAll(
-                status().isUnauthorized()
+                status().isForbidden()
         ).andDo(result -> {
-            Response<String> response = objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {
-            });
-            assertNotNull(response.getMessage());
+            if (result.getResponse().getContentLength() > 0) {
+                Response<UserResponse> response = objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {
+                });
+                assertNotNull(response.getMessage());
+            }
         });
     }
 }

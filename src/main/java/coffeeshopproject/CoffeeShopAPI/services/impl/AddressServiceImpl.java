@@ -6,6 +6,7 @@ import coffeeshopproject.CoffeeShopAPI.model.address.CreateAddressModel;
 import coffeeshopproject.CoffeeShopAPI.model.address.AddressResponse;
 import coffeeshopproject.CoffeeShopAPI.model.address.UpdateAddressModel;
 import coffeeshopproject.CoffeeShopAPI.repository.AddressRepository;
+import coffeeshopproject.CoffeeShopAPI.repository.UserRepository;
 import coffeeshopproject.CoffeeShopAPI.services.AddressService;
 import coffeeshopproject.CoffeeShopAPI.util.ValidationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,8 @@ import java.util.Date;
 
 @Service
 public class AddressServiceImpl implements AddressService {
-
+    @Autowired
+    UserRepository userRepository;
     @Autowired
     AddressRepository addressRepository;
     @Autowired
@@ -41,9 +43,10 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    public AddressResponse createShpAddress(User user, CreateAddressModel request) {
+    public AddressResponse createShpAddress(String userId, CreateAddressModel request) {
         validationUtil.validate(request);
-
+        User user = userRepository.findByEmail(userId)
+                .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND));
         var address = Address.builder()
                 .name(request.getName())
                 .handphone(request.getHandphone())
@@ -64,15 +67,19 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    public AddressResponse getShpAddress(User user, int id) {
+    public AddressResponse getShpAddress(String userId, int id) {
+        User user = userRepository.findByEmail(userId)
+                .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND));
         var address = addressRepository.findFirstByUserAndId(user, id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Address not found"));
         return convertToResponse(address);
     }
 
     @Override
-    public AddressResponse updateShpAddress(User user, UpdateAddressModel request) {
+    public AddressResponse updateShpAddress(String userId, UpdateAddressModel request) {
         validationUtil.validate(request);
+        User user = userRepository.findByEmail(userId)
+                .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND));
         Address req = addressRepository.findFirstByUserAndId(user,request.getId_address())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Address not found"));
         req.setName(request.getName());
@@ -90,7 +97,9 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    public void deleteaddress(User user, int id) {
+    public void deleteaddress(String userId, int id) {
+        User user = userRepository.findByEmail(userId)
+                .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND));
         var address = addressRepository.findFirstByUserAndId(user, id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Address not found"));
         addressRepository.delete(address);

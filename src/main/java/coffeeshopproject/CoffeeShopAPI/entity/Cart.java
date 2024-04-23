@@ -3,6 +3,8 @@ package coffeeshopproject.CoffeeShopAPI.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Getter
 @Setter
@@ -21,8 +23,8 @@ public class Cart {
     @JoinColumn(name = "id",referencedColumnName = "id_product")
     private Product product;
 
-    @JsonIgnore
-    @OneToOne(targetEntity = User.class)
+
+    @ManyToOne
     @JoinColumn(name = "email",referencedColumnName = "email")
     private User user;
 

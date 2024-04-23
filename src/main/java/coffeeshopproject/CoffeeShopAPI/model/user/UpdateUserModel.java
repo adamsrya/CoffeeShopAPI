@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 public class UpdateUserModel {
 
 
-    @NotBlank()
     @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{8,20}$" ,message = "Password must be at least 8 characters long, contain at least one lowercase letter, one uppercase letter, and one digit.")
     private String password;
     @NotBlank

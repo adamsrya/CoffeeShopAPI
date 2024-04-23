@@ -9,11 +9,11 @@ import org.springframework.stereotype.Service;
 
 public interface AddressService {
 
-    AddressResponse createShpAddress(User user,CreateAddressModel request);
+    AddressResponse createShpAddress(String userId,CreateAddressModel request);
 
-    AddressResponse getShpAddress(User user,int id);
+    AddressResponse getShpAddress(String userId,int id);
 
-    AddressResponse updateShpAddress(User user,UpdateAddressModel request);
+    AddressResponse updateShpAddress(String userId,UpdateAddressModel request);
 
-    void deleteaddress(User user,int id);
+    void deleteaddress(String userId,int id);
 }

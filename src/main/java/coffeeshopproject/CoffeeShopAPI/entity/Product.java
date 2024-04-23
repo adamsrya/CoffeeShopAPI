@@ -46,7 +46,7 @@ public class Product  {
     private Date updated;
 
     @JsonIgnore
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "product")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "product",cascade = CascadeType.ALL)
     private List<Cart> carts;
 
     @Override
@@ -63,7 +63,3 @@ public class Product  {
     }
 
 }
-
-
-
-

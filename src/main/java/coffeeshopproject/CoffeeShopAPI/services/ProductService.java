@@ -1,10 +1,7 @@
 package coffeeshopproject.CoffeeShopAPI.services;
 
 import coffeeshopproject.CoffeeShopAPI.entity.Product;
-import coffeeshopproject.CoffeeShopAPI.model.product.CreateProductModel;
-import coffeeshopproject.CoffeeShopAPI.model.product.ProductResponse;
-import coffeeshopproject.CoffeeShopAPI.model.product.SearchProductModel;
-import coffeeshopproject.CoffeeShopAPI.model.product.UpdateProductModel;
+import coffeeshopproject.CoffeeShopAPI.model.product.*;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
@@ -19,6 +16,7 @@ public interface ProductService {
     ProductResponse updateProduct(UpdateProductModel productModel, Product product);
     void deleteProduct(String id);
     Page<ProductResponse> search(Product product, SearchProductModel request);
-   /* List<Product>findall();*/
+    Page<ProductResponse> category(Product product, CategoryRequestModel request);
+    List<Product>findall();
 
 }

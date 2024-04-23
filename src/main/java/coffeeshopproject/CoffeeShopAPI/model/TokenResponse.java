@@ -12,5 +12,6 @@ import lombok.NoArgsConstructor;
 public class TokenResponse {
 
     private String token;
-    private Long expiretAt;
+    private String refreshtoken;
+
 }

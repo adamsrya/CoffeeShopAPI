@@ -9,6 +9,9 @@ import coffeeshopproject.CoffeeShopAPI.services.CartService;
 import coffeeshopproject.CoffeeShopAPI.util.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,8 +26,8 @@ public class CartController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public Response<String> addcarts(@RequestBody CartItemRequest request, User user) {
-            cartService.addtocart(request, user);
+    public Response<String> addcarts(@RequestBody CartItemRequest request, @AuthenticationPrincipal User user) {
+        cartService.addtocart(request, user.getUsername());
         return Response.<String>builder()
                 .message("Success create carts")
                 .data("Ok")
@@ -36,8 +39,8 @@ public class CartController {
             produces = MediaType.APPLICATION_JSON_VALUE
 
     )
-    public Response<CartResponse> getcart(User user) {
-        CartResponse cartResponse = cartService.cartitems(user);
+    public Response<CartResponse> getcart(@AuthenticationPrincipal User user) {
+        CartResponse cartResponse = cartService.cartitems(user.getUsername());
         return Response.<CartResponse>builder()
                 .message("Success Get Data")
                 .data(cartResponse)
@@ -64,9 +67,9 @@ public class CartController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public Response<CartResponse> updateProduct(@RequestBody CartItemRequest request,
-                                                @PathVariable String productid ,User user) {
+                                                @PathVariable String productid ,@AuthenticationPrincipal User user) {
         request.setProductid(productid);
-        CartResponse cartResponse = cartService.updatecarts(request, user);
+        CartResponse cartResponse = cartService.updatecarts(request, user.getUsername());
         return Response.<CartResponse>builder()
                 .message("Success Update Data")
                 .data(cartResponse)
@@ -78,8 +81,8 @@ public class CartController {
             path = "/api/cart",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public Response<String> deletecartitem(User user) {
-        cartService.deleteall(user);
+    public Response<String> deletecartitem(@AuthenticationPrincipal User user) {
+        cartService.deleteall(user.getUsername());
         return Response.<String>builder()
                 .message("Success delete Data")
                 .data("OK")

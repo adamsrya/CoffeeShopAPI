@@ -8,6 +8,7 @@ import coffeeshopproject.CoffeeShopAPI.model.cart.CartItemRequest;
 import coffeeshopproject.CoffeeShopAPI.model.cart.CartResponse;
 import coffeeshopproject.CoffeeShopAPI.repository.CartRepository;
 import coffeeshopproject.CoffeeShopAPI.repository.ProductRepository;
+import coffeeshopproject.CoffeeShopAPI.repository.UserRepository;
 import coffeeshopproject.CoffeeShopAPI.services.CartService;
 import coffeeshopproject.CoffeeShopAPI.util.ValidationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,22 +27,26 @@ public class CartServiceImpl implements CartService {
     ValidationUtil validationUtil;
     @Autowired
     CartRepository cartRepository;
+    @Autowired
+    UserRepository userRepository;
 
 
     @Override
-    public void addtocart(CartItemRequest request, User user) {
+    public void addtocart(CartItemRequest request, String userId) {
         validationUtil.validate(request);
         Product product = productRepository.findById(request.getProductid())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product Not Found"));
         if (product.getQuantity() < 1) {
             throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Product is Sold");
         }
-        if (cartRepository.findFirstByProductAndUser(product, user).isPresent()) {
+        User userexist = userRepository.findByEmail(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (cartRepository.findFirstByProductAndUser(product, userexist).isPresent()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
         Cart cart = new Cart();
-        cart.setUser(user);
+        cart.setUser(userexist);
         cart.setProduct(product);
         cart.setQuantity(request.getQuantity());
         cartRepository.save(cart);
@@ -49,11 +54,13 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public CartResponse cartitems(User user) {
+    public CartResponse cartitems(String userId) {
+        User user = userRepository.findByEmail(userId)
+                .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND));
         List<Cart> carts = cartRepository.findAllByUser(user);
         List<CartItem> cartItems = new ArrayList<>();
         long amount = 0;
-        if (!carts.isEmpty()){
+        if (!carts.isEmpty()) {
             for (Cart cart : carts) {
                 CartItem cartItem = new CartItem(cart);
                 cartItems.add(cartItem);
@@ -62,8 +69,8 @@ public class CartServiceImpl implements CartService {
             for (CartItem cartItem : cartItems) {
                 amount += (cartItem.getProduct().getPrice() * cartItem.getQuantity());
             }
-        }else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Carts its empty");
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Carts its empty");
         }
 
         return CartResponse.builder()
@@ -74,10 +81,10 @@ public class CartServiceImpl implements CartService {
 
     //Delete Product in Carts
     /*  @Override
-    public void deletecartitem(String productid,User user) {
+    public void deletecartitem(String productid,User userId) {
         Product product = productRepository.findById(productid)
                 .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"Product Not found"));
-        Cart cart = cartRepository.findFirstByProductAndUser(product,user)
+        Cart cart = cartRepository.findFirstByProductAndUser(product,userId)
                 .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"Product in carts not found"));
         cartRepository.delete(cart);
     }*/
@@ -91,22 +98,25 @@ public class CartServiceImpl implements CartService {
                     }
                 })).collect(Collectors.toList());*/
     @Override
-    public CartResponse updatecarts(CartItemRequest request, User user) {
+    public CartResponse updatecarts(CartItemRequest request, String userId) {
         Product product = productRepository.findById(request.getProductid())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product Not found"));
-        Cart cart = cartRepository.findFirstByProductAndUser(product, user)
+        User userexist = userRepository.findByEmail(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Cart cart = cartRepository.findFirstByProductAndUser(product, userexist)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "product in carts not found"));
         cart.setQuantity(request.getQuantity());
         cartRepository.save(cart);
-        if (request.getQuantity() < 1) {
+        if (request.getQuantity() < 1 ) {
             cartRepository.delete(cart);
         }
-        List<Cart> carts = cartRepository.findAllByUser(user);
+        List<Cart> carts = cartRepository.findAllByUser(userexist);
 
         List<CartItem> cartItems = new ArrayList<>();
         for (Cart cartup : carts) {
             CartItem cartItem = new CartItem(cartup);
             cartItems.add(cartItem);
+
         }
         long amount = 0;
         for (CartItem cartItem : cartItems) {
@@ -120,7 +130,9 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public void deleteall(User user) {
+    public void deleteall(String userId) {
+        User user = userRepository.findByEmail(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Product Not Found"));
         List<Cart> carts = cartRepository.findAllByUser(user);
         cartRepository.deleteAll(carts);
     }

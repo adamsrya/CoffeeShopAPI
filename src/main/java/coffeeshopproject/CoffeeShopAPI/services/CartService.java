@@ -5,16 +5,17 @@ import coffeeshopproject.CoffeeShopAPI.entity.Product;
 import coffeeshopproject.CoffeeShopAPI.entity.User;
 import coffeeshopproject.CoffeeShopAPI.model.cart.CartItemRequest;
 import coffeeshopproject.CoffeeShopAPI.model.cart.CartResponse;
+import org.springframework.security.core.userdetails.UserDetails;
 
 public interface CartService {
 
-    void addtocart(CartItemRequest request, User user);
+    void addtocart(CartItemRequest request, String userId);
 
-    CartResponse cartitems(User user);
+    CartResponse cartitems(String userId);
 
     //Delete Product in Carts
     //void deletecartitem(String productid,User user);
-    CartResponse updatecarts(CartItemRequest request,User user);
+    CartResponse updatecarts(CartItemRequest request, String userId);
 
-    void deleteall(User user);
+    void deleteall(String userId);
 }

@@ -1,5 +1,6 @@
 package coffeeshopproject.CoffeeShopAPI.model.user;
 
+import coffeeshopproject.CoffeeShopAPI.model.product.ProductCategoryModel;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -34,6 +35,9 @@ public class CreateUserModel {
 
     @NotBlank
     private String lastname;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private RoleUserModel role;
 
 
 
